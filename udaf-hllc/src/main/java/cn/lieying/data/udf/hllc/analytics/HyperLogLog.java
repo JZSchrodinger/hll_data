@@ -6,21 +6,13 @@ import cn.lieying.data.udf.hllc.hash.MurmurHash;
 import java.util.Arrays;
 
 /**
- * Created by jarvis on 2017/3/27~
+ * Created by rore256 on 7/6/17
  */
 public class HyperLogLog implements ICardinality {
-
-    /**
-     * Gamma function computed using Mathematica
-     * AccountingForm[
-     * N[With[{m = 2^Range[0, 31]},
-     * m (Gamma[-1/m]*(1 - 2^(1/m))/Log[2])^-m], 14]]
-     */
 
     private final int k;
     private int m; // length of M (not cardinality))
     private byte[] M; // set of data
-    private int Rsum = 0;
 
     private final double alphaMM;
 
@@ -40,11 +32,6 @@ public class HyperLogLog implements ICardinality {
         // assert is essentially an if statement of (m == (1 << k))
         // checks if # of buckets is a power of 2 and greater than 0
         assert (m == (1 << k)) : "Invalid array size: M.length must be a power of 2";
-        // for each loop for bytes in M
-        for (byte b : M) {
-            Rsum += b;
-        }
-
         this.alphaMM = getAlphaMM(k, m);
     }
 
@@ -68,10 +55,8 @@ public class HyperLogLog implements ICardinality {
         boolean modified = false;
         // unsigned right shift, regardless of sign, shifts all bits to right and replaces rest with 0s
         int j = hashedInt >>> (Integer.SIZE - k);
-        // byte r = (byte) (Integer.numberOfLeadingZeros((hashedInt << k) | (1 << (k - 1))) + 1);
-        byte r = (byte)rho(hashedInt, k);
+        byte r = (byte) (Integer.numberOfLeadingZeros((hashedInt << k) | (1 << (k - 1))) + 1);
         if (M[j] < r) {
-            Rsum += r - M[j];
             M[j] = r;
             modified = true;
         }
@@ -82,16 +67,6 @@ public class HyperLogLog implements ICardinality {
         int x = MurmurHash.hash(o);
         return offerHashed(x);
     }
-
-    /**
-     * Computes the position of the first set bit of the last Integer.SIZE-k bits
-     *
-     * @return Integer.SIZE-k if the last k bits are all zero
-     */
-    protected static int rho(int x, int k) {
-        return Integer.numberOfLeadingZeros((x << k) | (1 << (k - 1))) + 1;
-    }
-
     /**
      * @return this if estimators is null or no arguments are passed
      * @throws LogLogMergeException if estimators are not mergeable (all estimators must be instances of HyperLogLog of the same size)
@@ -117,36 +92,6 @@ public class HyperLogLog implements ICardinality {
         }
 
         return new HyperLogLog(mergedBytes);
-    }
-
-    /**
-     * @return this estimator bytes
-     * @throws LogLogMergeException if estimators are not mergeable (all estimators must be instances of HyperLogLog of the same size)
-     */
-    public byte[] getM() {
-        return this.M;
-    }
-
-    /**
-     * @return this estimator bucket size
-     * @throws LogLogMergeException if estimators are not mergeable (all estimators must be instances of HyperLogLog of the same size)
-     */
-    public int getm() {
-        return this.m;
-    }
-
-    /**
-     * Merges estimators to produce an estimator for their combined streams
-     *
-     * @param estimators
-     * @return merged estimator or null if no estimators were provided
-     * @throws LogLogMergeException if estimators are not mergeable (all estimators must be the same size)
-     */
-    public static HyperLogLog mergeEstimators(HyperLogLog... estimators) throws LogLogMergeException {
-        if (estimators == null || estimators.length == 0) {
-            return null;
-        }
-        return (HyperLogLog) estimators[0].merge(Arrays.copyOfRange(estimators, 1, estimators.length));
     }
 
     /**

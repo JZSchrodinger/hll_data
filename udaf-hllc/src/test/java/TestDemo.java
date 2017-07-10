@@ -13,7 +13,7 @@ public class TestDemo {
     @Test
     public void test1() throws IOException {
         HyperLogLog testLogLog = new HyperLogLog(15);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader("C:\\Users\\thatq\\Downloads\\data2"));
+        BufferedReader bufferedReader = new BufferedReader(new FileReader("C:\\Users\\thatq\\Downloads\\data"));
         String line;
         int size = 10000;
         while ((line = bufferedReader.readLine()) != null) {
