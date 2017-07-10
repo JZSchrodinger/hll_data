@@ -1,0 +1,136 @@
+package cn.lieying.data.udf.hllc.hash;
+
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with this
+ * work for additional information regarding copyright ownership. The ASF
+ * licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+/**
+ * This is a very fast, non-cryptographic hash suitable for general hash-based
+ * lookup. See http://murmurhash.googlepages.com/ for more details.
+ * <p/>
+ * <p>
+ * The C version of MurmurHash 2.0 found at that site was ported to Java by
+ * Andrzej Bialecki (ab at getopt org).
+ * </p>
+ */
+public class MurmurHash {
+
+    // hashes based on input (supports Long, Integer, Double, Float, String, byte [])
+    public static int hash(Object o) {
+        if (o == null) {
+            return 0;
+        }
+        if (o instanceof Long) {
+            return hashLong((Long) o);
+        }
+        if (o instanceof Integer) {
+            return hashLong((Integer) o);
+        }
+        if (o instanceof Double) {
+            return hashLong(Double.doubleToRawLongBits((Double) o));
+        }
+        if (o instanceof Float) {
+            return hashLong(Float.floatToRawIntBits((Float) o));
+        }
+        if (o instanceof String) {
+            return hash(((String) o).getBytes());
+        }
+        if (o instanceof byte[]) {
+            return hash((byte[]) o);
+        }
+        return hash(o.toString());
+    }
+
+    public static int hash(byte[] data) {
+        return hash(data, data.length, -1);
+    }
+
+    public static int hash(byte[] data, int seed) {
+        return hash(data, data.length, seed);
+    }
+
+    public static int hash(byte[] data, int length, int seed) {
+        // Magical mixing constants, work really well
+        int m = 0x5bd1e995;
+        int r = 24;
+
+        // Initializes hash to random value based on seed
+        int h = seed ^ length;
+        int len_4 = length >> 2;
+
+        for (int i = 0; i < len_4; i++) {
+            int i_4 = i << 2;
+            int k = data[i_4 + 3];
+            k = k << 8;
+            k = k | (data[i_4 + 2] & 0xff);
+            k = k << 8;
+            k = k | (data[i_4 + 1] & 0xff);
+            k = k << 8;
+            k = k | (data[i_4 + 0] & 0xff);
+            k *= m;
+            k ^= k >>> r;
+            k *= m;
+            h *= m;
+            h ^= k;
+        }
+
+        // avoid calculating modulo
+        int len_m = len_4 << 2;
+        int left = length - len_m;
+
+        if (left != 0) {
+            if (left >= 3) {
+                h ^= (int) data[length - 3] << 16;
+            }
+            if (left >= 2) {
+                h ^= (int) data[length - 2] << 8;
+            }
+            if (left >= 1) {
+                h ^= (int) data[length - 1];
+            }
+
+            h *= m;
+        }
+
+        h ^= h >>> 13;
+        h *= m;
+        h ^= h >>> 15;
+
+        return h;
+    }
+
+    public static int hashLong(long data) {
+        int m = 0x5bd1e995;
+        int r = 24;
+
+        int h = 0;
+
+        int k = (int) data * m;
+        k ^= k >>> r;
+        h ^= k * m;
+
+        k = (int) (data >> 32) * m;
+        k ^= k >>> r;
+        h *= m;
+        h ^= k * m;
+
+        h ^= h >>> 13;
+        h *= m;
+        h ^= h >>> 15;
+
+        return h;
+    }
+}
