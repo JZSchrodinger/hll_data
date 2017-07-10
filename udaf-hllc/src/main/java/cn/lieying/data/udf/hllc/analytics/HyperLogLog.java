@@ -10,7 +10,7 @@ import java.util.Arrays;
  */
 public class HyperLogLog implements ICardinality {
 
-    private final int k;
+    private final int k; // split for buckets between test & PMax
     private int m; // length of M (not cardinality))
     private byte[] M; // set of data
 
@@ -63,6 +63,7 @@ public class HyperLogLog implements ICardinality {
         return modified;
     }
 
+    // takes in a line, passes to hash to hash it
     public boolean offer(Object o) {
         int x = MurmurHash.hash(o);
         return offerHashed(x);
@@ -105,6 +106,7 @@ public class HyperLogLog implements ICardinality {
         }
     }
 
+    // retuns the number with the lowest error rate
     private static double getAlphaMM(final int p, final int m) {
         // See the paper.
         switch (p) {
@@ -138,6 +140,7 @@ public class HyperLogLog implements ICardinality {
             return Math.round(estimate);
         }
     }
+    // Linear Counting method
     private double linearCounting(int m, double V) {
         return m * Math.log(m / V);
     }
