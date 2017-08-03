@@ -3,3 +3,4 @@ Sorts through .dat file and finds cardinality with either HyperLogLog or LogLog 
 Parts I'm responsible for:   
 - HyperLogLog.java  
 - TestDemo.java   
+Rest was completed by other members of the team prior to me arriving.
