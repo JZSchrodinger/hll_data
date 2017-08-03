@@ -1,6 +1,6 @@
 HyperLogLog data processor for Lieying (Falcon Advertising)  
 Sorts through .dat file and finds cardinality with either HyperLogLog or LogLog method.   
 Parts I'm responsible for:   
-- HyperLogLog.java  
-- TestDemo.java   
+<b>HyperLogLog.java</b>  
+  <b>TestDemo.java</b>
 Rest was completed by other members of the team prior to me arriving.
